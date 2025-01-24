@@ -1,11 +1,11 @@
 [
   {
     "kernelSource": {
-      "name": "VantomKernel",
-      "repo": "https://github.com/devnoname120/kernel_xiaomi_sm6150",
-      "branch": "fifteen",
-      "device": "toco",
-      "defconfig": "toco_defconfig"
+      "name": "lineage-22.1",
+      "repo": "https://github.com/mostafameesr1/android_kernel_xiaomi_sm6150",
+      "branch": "lineage-22.1",
+      "device": "sweet",
+      "defconfig": "sweet_defconfig"
     },
     "withKernelSU": true,
     "withSUSFS": true,
@@ -41,8 +41,8 @@
     "AnyKernel3": {
       "use": true,
       "release": true,
-      "repo": "https://github.com/AndroidHQ254/AnyKernel3/",
-      "branch": "toco"
+      "repo": "https://github.com/mostafameesr1/AnyKernel3",
+      "branch": "master"
     }
   }
 ]
