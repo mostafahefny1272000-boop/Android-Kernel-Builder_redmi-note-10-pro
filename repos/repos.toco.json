@@ -8,7 +8,7 @@
       "defconfig": "sweet_defconfig"
     },
     "withKernelSU": true,
-    "withSUSFS": true,
+    "withSUSFS": false,
     "toolchains": [
       {
         "repo": "https://gitlab.com/PixelOS-Devices/playgroundtc",
@@ -41,8 +41,8 @@
     "AnyKernel3": {
       "use": true,
       "release": true,
-      "repo": "https://github.com/mostafameesr1/AnyKernel3",
-      "branch": "main"
+      "repo": "https://github.com/Kernel-SU/AnyKernel3",
+      "branch": "master"
     }
   }
 ]
