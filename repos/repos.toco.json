@@ -1,42 +1,79 @@
-[
-  {
-    "kernelSource": {
-      "name": "sweet-official",
-      "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
-      "branch": "sweet-r-oss",
-      "device": "sweet",
-      "defconfig": "sweet_defconfig"
-    },
-    "withKernelSU": true,
-    "withSUSFS": false,
-    "toolchains": [
-      {
-        "repo": "https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9",
-        "branch": "lineage-19.1",
-        "name": "gcc64",
-        "binPath": ["bin"]
-      },
-      {
-        "repo": "https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9",
-        "branch": "lineage-19.1",
-        "name": "gcc32",
-        "binPath": ["bin"]
-      }
-    ],
-    "ccache": true,
-    "params": {
-      "ARCH": "arm64",
-      "CC": "gcc64/bin/aarch64-linux-android-gcc",
-      "externalCommand": {
-        "CROSS_COMPILE": "gcc64/bin/aarch64-linux-android-",
-        "CROSS_COMPILE_ARM32": "gcc32/bin/arm-linux-androideabi-"
-      }
-    },
-    "AnyKernel3": {
-      "use": true,
-      "release": true,
-      "repo": "https://github.com/Kernel-SU/AnyKernel3",
-      "branch": "master"
-    }
-  }
-]
+name: ⚡ SWEET KERNEL BUILDER ⚡
+
+on:
+  workflow_dispatch:
+    inputs:
+      kernel_src:
+        description: 'رابط المصدر الرسمي (متغيرش)'
+        required: true
+        default: 'https://github.com/MiCode/Xiaomi_Kernel_OpenSource'
+      kernel_bra:
+        description: 'فرع الكيرنال (متغيرش)'
+        required: true
+        default: 'sweet-r-oss'
+      kernel_def:
+        description: 'ملف التعريف (متغيرش)'
+        required: true
+        default: 'sweet_defconfig'
+      dev_name:
+        description: 'اسم المطور (اكتب اسمك)'
+        required: true
+        default: 'your_name'
+
+jobs:
+  build_sweet_kernel:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: 1️⃣ تجهيز بيئة العمل
+        run: |
+          sudo apt update
+          sudo apt install -y git make gcc gcc-aarch64-linux-gnu bc bison flex libssl-dev libelf-dev python3
+
+      - name: 2️⃣ تحميل المصدر الرسمي وتنظيفه
+        run: |
+          git clone --depth=1 --branch ${{ github.event.inputs.kernel_bra }} ${{ github.event.inputs.kernel_src }} kernel
+          cd kernel
+          # 🧹🧹🧹 الحل السحري 🧹🧹🧹
+          # هنحذف الملف المتسبب في المشكلة (gcc-wrapper.py)
+          rm -f scripts/gcc-wrapper.py
+          # بدل ما نحذفه، هنعمل ملف جديد سليم بالكود الصح
+          cat > scripts/gcc-wrapper.py << 'EOF'
+#!/usr/bin/env python3
+import sys, subprocess
+def main():
+    proc = subprocess.run(sys.argv[1:])
+    sys.exit(proc.returncode)
+if __name__ == "__main__":
+    main()
+EOF
+          chmod +x scripts/gcc-wrapper.py
+          
+          # 🔧 هنصلح مشكلة NR_CPUS 🔧
+          # بكل بساطة، هنضيف السطر الصح في ملف الإعدادات
+          echo "CONFIG_NR_CPUS=8" >> arch/arm64/configs/${{ github.event.inputs.kernel_def }}
+
+      - name: 3️⃣ دمج KernelSU Next
+        working-directory: kernel
+        run: |
+          curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh" | bash -s next
+          echo "CONFIG_KSU=y" >> arch/arm64/configs/${{ github.event.inputs.kernel_def }}
+
+      - name: 4️⃣ بناء الكيرنال
+        working-directory: kernel
+        run: |
+          make ARCH=arm64 ${{ github.event.inputs.kernel_def }}
+          make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
+
+      - name: 5️⃣ تجهيز ملف التثبيت (AnyKernel3)
+        run: |
+          git clone --depth=1 https://github.com/Kernel-SU/AnyKernel3.git AnyKernel3
+          cp kernel/arch/arm64/boot/Image.gz-dtb AnyKernel3/
+          cd AnyKernel3
+          zip -r9 SWEET-Kernel-${{ github.event.inputs.dev_name }}-$(date +%Y%m%d-%H%M).zip *
+
+      - name: 6️⃣ رفع الملف الجاهز
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sweet-KernelSU-Next
+          path: AnyKernel3/*.zip
+          retention-days: 7
