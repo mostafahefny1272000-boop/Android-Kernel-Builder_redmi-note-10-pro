@@ -1,9 +1,9 @@
 [
   {
     "kernelSource": {
-      "name": "lineage-22.1",
-      "repo": "https://github.com/mostafameesr1/android_kernel_xiaomi_sm6150",
-      "branch": "lineage-22.1",
+      "name": "sweet",
+      "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+      "branch": "sweet-r-oss",
       "device": "sweet",
       "defconfig": "sweet_defconfig"
     },
